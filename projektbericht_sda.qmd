@@ -143,7 +143,7 @@ p1 <- ggplot(plot_data, aes(x = p, y = likelihood)) +
   geom_line() +
   geom_vline(xintercept = p_hat, linetype = "dashed", color = "red") +
   labs(title = "Likelihood-Funktion", x = "p", y = "Likelihood") +
-  theme_minimal()
+  theme_minimal()+
   theme(text = element_text(family = "serif")) 
 
 # Log-Likelihood-Plot erstellen
@@ -239,7 +239,7 @@ ggplot(data_simulated_means, aes(x = Mean)) +
 
 *Hier benötigen Sie einen -gern selbst gewählten- Datensatz mit quantitativ-stetige Variablen und zumindest auch einem qualititativ-binären Merkmal.*
 
-Für die kommenden Aufgabe wird die Welle 10 des European Social Surveys verwendet. Ziel dieser Untersuchung wird es nachzuvollziehen welche Faktoren mit einer linken oder rechten politischen Gesinnung einhergehen (In Anlehnung an die kürzlich veröffentliche Studie der Financial Times: <https://www.ft.com/content/29fd9b5c-2f35-41bf-9d4c-994db4e12998>) . Dafür schauen wir lediglich nach Korrelation.
+Für die kommenden Aufgabe wird die Welle 10 des European Social Surveys verwendet. Ziel dieser Untersuchung wird es nachzuvollziehen welche Faktoren mit einer linken oder rechten politischen Gesinnung einhergehen (In Anlehnung an die kürzlich veröffentliche Studie der Financial Times (<https://www.ft.com/content/29fd9b5c-2f35-41bf-9d4c-994db4e12998>) . Dafür schauen wir lediglich nach Korrelation.
 
 Vorab werden ein paar Datenvorbereitungsschritte durchlaufen und Zielgruppe eingeschränkt.
 
@@ -247,8 +247,8 @@ Wir schauen uns drei Alters-Kohorten an und lediglich Leute die auch im Befragun
 
 Folgende variablen werden für die Analyse ausgewählt:
 
-| label         | Inhalt                                                                                    |
-|---------------------|---------------------------------------------------|
+| label         | Beschreibung                                                                              |
+|----------------------|--------------------------------------------------|
 | lrscale       | Links/Rechts Skala                                                                        |
 | lrdummy       | Links Rechts Dummy                                                                        |
 | gndr          | Geschlecht                                                                                |
@@ -668,7 +668,7 @@ Die verschiedenen Regressionsmodelle erzeugen sehr ähnliche Koeffizienten. Eini
 
 Laut der Financial Times Studie ist besonders Gen-Z von politischen Unterschieden entlang des Geschlechts betroffen. Zwischen den Kohorten im ESS sind jedoch kaum unterschiede zu beobachten.
 
-Mit 0.102 ist der Anteil der erklärten Varianz zwar gering, was in sozial wissenschaftliche Fragestellungen jedoch kein Problem darstellt, sofern die meisten Features statistisch signifikant sind ( Ozili, Person K, 2023, The acceptable R-square in empirical modelling for social science research, Munich Personal RePEc Archive).
+Mit 0.102 ist der Anteil der erklärten Varianz zwar gering, was in sozial wissenschaftliche Fragestellungen jedoch kein Problem darstellt, sofern die meisten Features statistisch signifikant sind (Ozili, Person K, 2023, The acceptable R-square in empirical modelling for social science research, Munich Personal RePEc Archive).
 
 Die Lasso und Ridge Regression veringern nur den Beitrag weniger Features. Eigentlich sollte die stärke dieser beiden Modelle in der Out of Sample Evaluation zum Vorschein kommen, da der Zweck des Regularisierungsterms, wie der Name sagt, ein regularisierbares Ergebniss ist. Hier unterscheiden die Werte sich jedoch kaum von der In Sample Evaluation. Das OLS Modell wäre mit dem geringsten MSE sogar vorzuziehen. Mit einer höheren Featureanzahl wären die Vorteile der Regularisierung aber warscheinlich beobachtbar.
 
