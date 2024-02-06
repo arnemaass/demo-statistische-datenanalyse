@@ -155,8 +155,8 @@ p2 <- ggplot(plot_data, aes(x = p, y = log_likelihood)) +
   theme(text = element_text(family = "serif"))
 
 # Plots anzeigen
-print(p1)
-print(p2)
+p1
+p2
 ```
 
 ## **2. Schätztheorie (5P)**
@@ -239,16 +239,16 @@ ggplot(data_simulated_means, aes(x = Mean)) +
 
 *Hier benötigen Sie einen -gern selbst gewählten- Datensatz mit quantitativ-stetige Variablen und zumindest auch einem qualititativ-binären Merkmal.*
 
-Für die kommenden Aufgabe wird die Welle 10 des European Social Surveys verwendet. Ziel dieser Untersuchung wird es nachzuvollziehen welche Faktoren mit einer linken oder rechten politischen Gesinnung einhergehen (In Alehnung an die küzlich veröffentliche Studie der Financial Times: <https://www.ft.com/content/29fd9b5c-2f35-41bf-9d4c-994db4e12998>) . Dafür schauen wir lediglich nach Korrelation.
+Für die kommenden Aufgabe wird die Welle 10 des European Social Surveys verwendet. Ziel dieser Untersuchung wird es nachzuvollziehen welche Faktoren mit einer linken oder rechten politischen Gesinnung einhergehen (In Anlehnung an die kürzlich veröffentliche Studie der Financial Times: <https://www.ft.com/content/29fd9b5c-2f35-41bf-9d4c-994db4e12998>) . Dafür schauen wir lediglich nach Korrelation.
 
 Vorab werden ein paar Datenvorbereitungsschritte durchlaufen und Zielgruppe eingeschränkt.
 
-Wir schauen uns 3 Alters-Kohorten an und lediglich Leute die auch im Befragunsland sozialisiert wurden. Die Links-Rechts-Skala wird Dummy-Kodiert mit links \<= 5 und rechts \>5.
+Wir schauen uns drei Alters-Kohorten an und lediglich Leute die auch im Befragunsland sozialisiert wurden. Die Links-Rechts-Skala wird Dummy-Kodiert mit links \<= 5 und rechts \>5.
 
 Folgende variablen werden für die Analyse ausgewählt:
 
 | label         | Inhalt                                                                                    |
-|-------------------|-----------------------------------------------------|
+|--------------------|----------------------------------------------------|
 | lrscale       | Links/Rechts Skala                                                                        |
 | lrdummy       | Links Rechts Dummy                                                                        |
 | gndr          | Geschlecht                                                                                |
@@ -396,7 +396,7 @@ ggplot(df, aes(x = factor(dummy_lr, labels = c("Links", "Rechts")), fill = facto
 kable(as.data.frame(cor(as.matrix(select_if(df, is.numeric)))),digits = 3, format = "latex", caption = "Korrelationsmatrix") %>% kable_styling(latex_options = "scale_down")
 
 # Kovarianzmatrix
-kable(cov(select_if(df, is.numeric)),digits = 3, format = "latex", caption= "Covarianzmatrix") %>% kable_styling(latex_options = "scale_down")
+kable(cov(select_if(df, is.numeric)),digits = 3, format = "latex", caption= "Kovarianzmatrix") %>% kable_styling(latex_options = "scale_down")
 
 # Visuelle Exploration
 
@@ -662,9 +662,9 @@ kable(data.frame(
 
 Die Visualisierung hat bedeutende Unterschiede entlang des Geschlechts und zwischen Ländern, auf die politische Gesinnung aufgezeigt. Erst vor kurzem hat die Financial Times eine Studie veröffentlicht, nach der die Schere bei den politischen Ansichten und Einstellungen zwischen Männern und Frauen zwischen 18 und 29 Jahren seit Jahrzehnten immer weiter auseinander geht.
 
-Für die kontinuierlichen Variablen wurden in den Dichte-Plots zwar subtilere Unterschiede beobachtet - die dennoch bedeutsam sein können. Der deutlichste Unterschied war im Vertrauen in das nationale Parlament zu sehen. Dies ist unter der Annahme, dass rechte Personen patriotischer sind, wenig überraschend. Dennoch ist besonders im deutschen Raum oft eher eine Entfremdung von der lokalen Regierung mit rechter Ideologie assoziiert. Um etwas mehr Sicherheit in solche Überlegungen zu bringen ist es wichtig für konfundierende Variablen zu kontrollieren. Regressionsmodelle sind dazu zwar auch nur bedingt in der Lage, erlauben aber in jedem Fall eine fundiertere Inferenz als absolute Häufigkeiten .
+Für die kontinuierlichen Variablen wurden in den Dichte-Plots subtilere Unterschiede beobachtet - die dennoch bedeutsam sein können. Der deutlichste Unterschied war im Vertrauen in das nationale Parlament zu sehen. Dies ist unter der Annahme, dass rechte Personen patriotischer sind, wenig überraschend. Dennoch ist besonders im deutschen Raum oft eher eine Entfremdung von der lokalen Regierung mit rechter Ideologie assoziiert. Um etwas mehr Sicherheit in solche Überlegungen zu bringen ist es wichtig für konfundierende Variablen zu kontrollieren. Regressionsmodelle sind dazu zwar auch nur bedingt in der Lage, erlauben aber in jedem Fall eine fundiertere Inferenz als absolute Häufigkeiten.
 
-Die verschiedenen Regressionsmodelle erzeugen sehr ähnliche Koeffizienten. Einige Features erweisen sich hier als nicht Signifikant, trotz visueller Unterschiede, wie zum Beispiel Internetzugang. Dennoch sind die meisten Koeffizienten signifikant! Überraschend ist der starke positive Zusammenhang zwischen Lebenszufriedenheit und rechter Gesinnung. Eine gängige Annahme ist das rechte ideologie eine Reaktion auf Unzufriedenheiten sei, wie zum Beispiel die eigene intergenerationale Mobilität.
+Die verschiedenen Regressionsmodelle erzeugen sehr ähnliche Koeffizienten. Einige Features erweisen sich hier als nicht Signifikant, trotz visueller Unterschiede, wie zum Beispiel Internetzugang. Dennoch sind die meisten Koeffizienten signifikant! Überraschend ist der starke positive Zusammenhang zwischen Lebenszufriedenheit und rechter Gesinnung. Eine gängige Annahme ist das rechte ideologie eine Reaktion auf Unzufriedenheiten sei, wie zum Beispiel bei negativer intergenerationaler sozialer Mobilität.
 
 Laut der Financial Times Studie ist besonders Gen-Z von politischen Unterschieden entlang des Geschlechts betroffen. Zwischen den Kohorten im ESS sind jedoch kaum unterschiede zu beobachten.
 
