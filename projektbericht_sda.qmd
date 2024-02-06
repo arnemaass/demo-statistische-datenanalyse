@@ -1,0 +1,740 @@
+---
+title: "Statistische Datenanalyse"
+author: "Arne Maaß"
+subtitle: "Berliner Hochschule für Technik: B.Sc. Angewandte Mathematik"
+date: "06.02.2024" 
+format:
+  pdf:
+    toc: true
+    latex-engine: xelatex
+  latex:
+    toc: true
+editor: visual
+---
+
+# **Projektbericht Statistische Datenanalyse**
+
+```{r setup , include= FALSE}
+
+rm(list=ls())
+
+
+if (!require("tidyverse")) install.packages("tidyverse")
+if (!require("arrow")) install.packages("arrow")
+if (!require("tidymodels")) install.packages("tidymodels")
+if (!require("caret")) install.packages("caret")
+if (!require("kableExtra")) install.packages("kableExtra")
+if (!require("glmnet")) install.packages("glmnet")
+if (!require("stargazer")) install.packages("stargazer")
+if (!require("ggplot2")) install.packages("ggplot2") 
+if (!require("hrbrthemes")) install.packages("hrbrthemes")
+if (!require("viridis")) install.packages("viridis")
+if (!require("FactoMineR")) install.packages("FactoMineR")
+if (!require("factoextra")) install.packages("factoextra")
+
+library(tidyverse) # Sammlung von Paketen zur Datensäuberung und Manipulation
+library(arrow) # um Parquet Dateien einzuladen 
+library(tidymodels) # für Stichprobenziehung und In & Out-Of-Sample Evaluation
+library(caret) # Für eine Kofusionsmatrix
+library(kableExtra) # Für Tabellen
+library(glmnet) # Für Risge und Lasso Regression
+library(stargazer) # Für Regressionsmodelle
+
+
+library(ggplot2) # zur Visualisierung
+library(hrbrthemes)
+library(viridis)
+
+
+library(FactoMineR) # zur PCA-visualisierung
+library(factoextra)
+```
+
+## **1. Maximum-Likelihood-Schätzung (5P)**
+
+*Erläutern Sie das Prinzip der Maximum-Likelihood-Schätzung an einem Beispiel.*
+
+-   *Ziehen Sie sich (in R) eine Stichprobe aus einer der folgenden Verteilungen: Geometrisch (Achtung: R definiert die Verteilung etwas anders als wir in der Formelsammlung), Poisson, Exponential.\
+    oder Modifikation zur R-Stichprobe: Wenn Sie einen passenden Datensatz finden mit einer Variable, die zu einer dieser Verteilungen passt, dürfen Sie auch diese Daten anstatt der Stichprobe verwenden.*
+
+    ```{r}
+    set.seed(102377) # Für Reproduzierbarkeit
+
+    n <- 100 # Größe der Stichprobe
+    prob <- 0.3 # Erfolgswahrscheinlichkeit
+    sample <- rgeom(n, prob) + 1 
+    # Zieht eine Stichprobe und addiert 1, da rgeom von 0 beginnt
+
+    ```
+
+-   *Schreiben Sie die Herleitung der Schätzung in den wesentlichen Schritten auf.*
+
+#### Wahrscheinlichkeitsfunktion aufstellen:
+
+Die Wahrscheinlichkeitsfunktion einer geometrischen Verteilung (die bei 1 beginnt) für eine einzelne Beobachtung ist gegeben durch:
+
+$$
+P(X = x) = (1 - p)^{x-1} p
+$$
+
+#### Likelihood-Funktion aufstellen:
+
+Für eine Stichprobe von $n$ unabhängigen Beobachtungen $x_1​,x_2​,…,x_n$
+
+ist die Likelihood-Funktion das Produkt der einzelnen Wahrscheinlichkeiten
+
+$$
+L(p) = \prod_{i=1}^{n} (1 - p)^{x_i - 1} p
+$$
+
+#### Log-Likelihood-Funktion:
+
+Die Log-Likelihood-Funktion, die der natürliche Logarithmus der Likelihood-Funktion ist, vereinfacht die Berechnungen, da sie uns erlaubt mit einer Summe statt einem Produkt zu arbeiten und ist gegeben durch:
+
+$$
+l(p) = \ln(L(p)) = \sum_{i=1}^{n} [(x_i - 1) \ln(1 - p) + \ln(p)]
+$$
+
+#### Ableitung der Log-Likelihood-Funktion:
+
+Um den Wert von $p$ zu finden, der $l(p)$ maximiert, leiten wir $l(p)$ nach $p$ ab:
+
+$$
+\frac{dl(p)}{dp} = \sum_{i=1}^{n} \left[ \frac{-(x_i - 1)}{1 - p} + \frac{1}{p} \right]
+$$
+
+#### Bestimmung des Maximums:
+
+Wir setzen die Ableitung gleich Null und lösen die Gleichung nach $p$
+
+$$
+0 = \sum_{i=1}^{n} \left[ \frac{-(x_i - 1)}{1 - p} + \frac{1}{p} \right]
+$$
+
+Durch Umformen erhalten wir die MLE-Schätzung für $\hat{p}$. Die genaue Lösung hängt von der spezifischen Form der Gleichung ab und führt zu:
+
+$$
+\hat{p} = \frac{n}{\sum_{i=1}^{n} x_i}
+$$
+
+-   *Wenden Sie die hergeleitete Schätzung auf Ihre Daten an und stellen Sie die sowohl die Likelihood- als auch die Log-Likelihood-Funktion (inklusive der eingezeichneten Schätzung) passend grafisch dar.*
+
+```{r, out.width='70%'}
+
+# Maximum-Likelihood-Schätzung für p
+p_hat <- 1 / mean(sample)
+
+# Likelihood- und Log-Likelihood-Funktion definieren
+likelihood <- function(p, data) prod(dgeom(data - 1, prob = p))
+log_likelihood <- function(p, data) sum(dgeom(data - 1, prob = p, log = TRUE))
+
+# Werte für p über einen Bereich generieren
+p_vals <- seq(0.01, 0.99, by = 0.01)
+
+# Likelihood und Log-Likelihood für jeden Wert von p berechnen
+likelihood_vals <- sapply(p_vals, likelihood, data = sample)
+log_likelihood_vals <- sapply(p_vals, log_likelihood, data = sample)
+
+# Daten für die Plots vorbereiten
+plot_data <- tibble(p = p_vals, likelihood = likelihood_vals, log_likelihood = log_likelihood_vals)
+
+# Likelihood-Plot erstellen
+p1 <- ggplot(plot_data, aes(x = p, y = likelihood)) +
+  geom_line() +
+  geom_vline(xintercept = p_hat, linetype = "dashed", color = "red") +
+  labs(title = "Likelihood-Funktion", x = "p", y = "Likelihood") +
+  theme_minimal()
+  theme(text = element_text(family = "serif")) 
+
+# Log-Likelihood-Plot erstellen
+p2 <- ggplot(plot_data, aes(x = p, y = log_likelihood)) +
+  geom_line() +
+  geom_vline(xintercept = p_hat, linetype = "dashed", color = "red") +
+  labs(title = "Log-Likelihood-Funktion", x = "p", y = "Log-Likelihood") +
+  theme_minimal()+
+  theme(text = element_text(family = "serif"))
+
+# Plots anzeigen
+print(p1)
+print(p2)
+```
+
+## **2. Schätztheorie (5P)**
+
+*Diskutieren Sie die Eigenschaften des Mittelwerts als Schätzung für den Erwartungswert der Verteilung.*
+
+-   *Suchen Sie sich eine der folgenden Verteilungen aus: Bernoulli, Geometrisch, Poisson, Exponential - allerdings nicht dieselbe Verteilung wie in Themenabschnitt 1.!*
+
+    Hier wurde eine exonential Verteilung gewählt!
+
+-   *Mit dem Mittelwert* $\overline{X}$ *schätzen Sie nun den Erwartungswert Ihrer gewählten Verteilung. Erläutern Sie daran die Begriffe Bias, MSE und Konsistenz.*
+
+    ### **Bias**
+
+    Der Bias eines Schätzers ist die Differenz zwischen dem Erwartungswert des Schätzers und dem wahren Wert des Parameters. Ein unverzerrter Schätzer hat einen Erwartungswert, der gleich dem wahren Parameterwert ist. Ist der Mittelwert $\overline{X}$ der Exponentialverteilung ein unverzerrter Schätzer für den Erwartungswert $μ$ , so gilt $E( \overline{X})=\mu$. Dies wird für identisch und unabhängig verteilte (i.i.d.) Stichproben mit $n > 30$ angenommen, aufgrund des Zentralen Grenzwertsatzes, der besagt, dass der Mittelwert solcher Stichproben gegen eine Normalverteilung konvergiert, unabhängig von der ursprünglichen Verteilung der Variablen, solange die ursprüngliche Verteilung einen endlichen Erwartungswert und eine endliche Varianz aufweist
+
+    ### **MSE**
+
+    Der Mean Squared Error (MSE) eines Schätzers ist der Erwartungswert des quadratischen Fehlers. $$\text{MSE}(\hat{\theta}) = E[(\hat{\theta} - \theta)^2$$
+
+    MSE kombiniert die Varianz des Schätzers und seinen quadrierten Bias: $$MSE(X)= Bias(X)^2 + Var(X)$$
+
+    Für einen unverzerrten Schätzer wie $\overline{X}$ ist der MSE gleich der Varianz des Schätzers, da $Bias = 0$, aufgrund der Erwartunstreue.
+
+    ### **Konsistenz**
+
+    Ein Schätzer ist konsistent, wenn er mit zunehmender Stichprobengröße gegen den wahren Parameterwert konvergiert. Anders ausgedrückt ist Mittelwert $\overline{X}$ ein konsistenter Schätzer für den Erwartungswert, da mit zunehmender Stichprobengröße die Varianz von $\overline{X}$ gegen null konvergiert während der Bias bereits null ist wegen der iid-Stichprobe.
+
+-   *Überlegen Sie sich wie Sie mit Hilfe von Stichprobenziehungen in R (grafisch) illustrieren können, dass* $\overline{X}$ *gegen den "wahren" Erwartungswert konvergiert.*
+
+```{r, out.width='70%'}
+# Parameter setzen
+lambda <- 1 
+mu <- 1 / lambda # wahrer Wert
+
+# Stichprobengrößen
+sample_sizes <- seq(10, 10000, by = 10)
+
+# Simulation der Mittelwerte
+set.seed(102377)
+means <- sapply(sample_sizes, function(n) {
+  mean(rexp(n, rate = lambda))
+})
+
+data_means <- data.frame(SampleSize = sample_sizes, Mean = means)
+
+# Plot der Konvergenz
+ggplot(data_means, aes(x = SampleSize, y = Mean)) +
+  geom_line() +
+  geom_hline(yintercept = mu, linetype = "dashed", color = "red") +
+  labs(title = "Konvergenz des Stichprobenmittelwerts gegen den Erwartungswert",
+       x = "Stichprobengröße", y = "Mittelwert der Stichprobe") +
+  theme_minimal()+
+  theme(text = element_text(family = "serif"))
+
+
+```
+
+-   *Überlegen Sie sich außerdem, wie Sie mit Hilfe von Stichprobenziehungen in R (grafisch) illustrieren können, dass* $\overline{X}$ *eine approximative Normalverteilung hat. Welche approximative Normalverteilung sollte das bei Ihnen sein - in Abhängigkeit vom Parameter der Verteilung?*
+
+```{r, out.width='70%'}
+set.seed(102377)
+num_simulations <- 1000
+simulated_means <- replicate(num_simulations, mean(rexp(1000, rate = lambda)))
+
+# Daten vorbereiten
+data_simulated_means <- data.frame(Mean = simulated_means)
+
+# Histogramm mit einer Normalverteilungskurve
+ggplot(data_simulated_means, aes(x = Mean)) +
+  geom_histogram(aes(y = after_stat(density)), binwidth = 0.01, fill = "skyblue") +
+  stat_function(fun = dnorm, args = list(mean = mu, sd = (1 / lambda) / sqrt(1000)), color = "red") +
+  labs(title = "Approximative Normalverteilung des Stichprobenmittelwerts",
+       x = "Stichprobenmittelwert", y = "Dichte") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+```
+
+## **3. Hypothesentests (5P)**
+
+*Hier benötigen Sie einen -gern selbst gewählten- Datensatz mit quantitativ-stetige Variablen und zumindest auch einem qualititativ-binären Merkmal.*
+
+Für die kommenden Aufgabe wird die Welle 10 des European Social Surveys verwendet. Ziel dieser Untersuchung wird es nachzuvollziehen welche Faktoren mit einer linken oder rechten politischen Gesinnung einhergehen (In Alehnung an die küzlich veröffentliche Studie der Financial Times: <https://www.ft.com/content/29fd9b5c-2f35-41bf-9d4c-994db4e12998>) . Dafür schauen wir lediglich nach Korrelation.
+
+Vorab werden ein paar Datenvorbereitungsschritte durchlaufen und Zielgruppe eingeschränkt.
+
+Wir schauen uns 3 Alters-Kohorten an und lediglich Leute die auch im Befragunsland sozialisiert wurden. Die Links-Rechts-Skala wird Dummy-Kodiert mit links \<= 5 und rechts \>5.
+
+Folgende variablen werden für die Analyse ausgewählt:
+
+| label         | Inhalt                                                                                    |
+|-------------------|-----------------------------------------------------|
+| lrscale       | Links/Rechts Skala                                                                        |
+| lrdummy       | Links Rechts Dummy                                                                        |
+| gndr          | Geschlecht                                                                                |
+| trstprl       | Vertrauen in das nationale Parlament                                                      |
+| netusoft      | Internetnutzung                                                                           |
+| stflife       | Lebenszufriedenheit                                                                       |
+| health        | Subjektive Gesundheit                                                                     |
+| rlgdgr        | Religiösität                                                                              |
+| wrclmch       | Sorgen um Klimawandel                                                                     |
+| chldo12_dummy | Eigenes Kind über 12                                                                      |
+| cohort        | Geburtskohorte nach Jahrzehnten                                                           |
+| cntry         | Land der Befragung (synonym mit Citizenship und Geburtsland durch implementierten Filter) |
+
+```{r}
+# df <- read.csv("C:/Users/user/OneDrive/Desktop/BHT/StatDA/PROJEKT/data/ESS10.csv")
+df <- read_parquet("C:/Users/user/OneDrive/Desktop/BHT/StatDA/PROJEKT/data/ess_sda.parquet")
+
+
+#Stichprobenziehung um Replikationen zu vermeidne:
+set.seed(102377)
+df <- initial_split(prop = 0.8, data=df) %>% training(.)
+
+df <- df %>% 
+  # Wir schauen uns 3 Kohorten an:
+  mutate(cohort = case_when(yrbrn %in% c(1980:1989) ~ "1980s",
+                            yrbrn %in% c(1990:1999) ~ "1990s",
+                            yrbrn %in% c(2000:2009) ~ "2000s")) %>%  
+  filter(!is.na(cohort)) %>% 
+  # Leute die im Befragunsland sozialisiert wurden
+  filter(ctzcntr == 1 & brncntr == 1) %>% 
+  # Filtern von NA- Werten:
+  filter(lrscale <= 10) %>%  
+  mutate(dummy_lr = as.factor(ifelse(lrscale<=5, 0, 1))) %>% 
+  filter(trstprl %in% (0:10)) %>% 
+  filter(netusoft %in% (1:5)) %>% 
+  filter(stflife <= 10) %>% 
+  filter(health <= 5) %>% 
+  filter(rlgdgr <= 10) %>%
+  filter(wrclmch <= 5) %>% 
+  mutate(chldo12_dummy = ifelse(chldo12 %in% c(1,2,3,4,5,6), 1, 
+                                ifelse(chldo12 == 0, 0, NA))) %>% 
+  select(cntry, lrscale, dummy_lr, trstprl, cohort, gndr, netusoft, stflife, health, rlgdgr,  wrclmch, chldo12_dummy) %>%
+  na.omit()
+
+```
+
+-   *Wenden Sie mindestens 3 verschiedene Tests direkt auf die Variablen an. Mindestens einer der Tests soll dabei auch ein einseitiger sein.*
+
+```{r}
+
+# Ein-Stichproben T-Test für Vertrauen in das nationale Parlament
+t_test_trstprl <- t.test(trstprl ~ dummy_lr, data=df)
+
+# Einseitiger T-Test für Lebenszufriedenheit zwischen linker und rechter Gesinnung
+t_test_stflife <- t.test(stflife ~ dummy_lr, data=df, alternative="greater")
+
+# Chi-Quadrat-Test für `gender` und `dummy_lrs`
+tbl_gender_lrscale <- table(df$gndr, df$dummy_lr)
+chi_sq_test <- chisq.test(tbl_gender_lrscale)
+
+# Ergebnisse
+list(t_test_trstprl = t_test_trstprl,
+     t_test_stflife = t_test_stflife,
+     chi_sq_test = chi_sq_test)
+
+```
+
+-   *Was sind jeweils Hypothese und Alternative, was ist das Testergebnis? (Schön wäre es, wenn die Hypothese nicht immer abgelehnt wird, experimentieren Sie ggf. etwas mit Ihrern Datenbeispielen herum.)*
+
+1.  **T-Test für unabhängige Stichproben für Vertrauen in das nationale Parlament**:
+
+    **Nullhypothese (H0):** Es gibt keinen Unterschied im Mittelwert des Vertrauens in das nationale Parlament zwischen den Gruppen mit linker (≤5) und rechter (\>5) politischer Gesinnung. **Alternativhypothese (H1):** Es gibt einen Unterschied im Mittelwert des politischen Vertrauens zwischen Gruppen mit linker und rechter politischer Gesinnung.
+
+    **Ergebnis**: Der sehr kleine p-Wert deutet darauf hin, dass die Nullhypothese mit einer hohen Konfidenz abgelehnt wird. Es gibt einen statistisch signifikanten Unterschied im Vertrauen zum nationalen Parlament zwischen den Gruppen mit linker und rechter politischer Gesinnung in den Daten, wobei die linke Gruppe ein niedrigeres durchschnittliches Vertrauen aufweist.
+
+2.  **Einseitiger T-Test für Lebenszufriedenheit zwischen linker und rechter Gesinnung:**
+
+    **Nullhypothese (H0):** Es gibt keinen Unterschied in der Lebenszufriedenheit zwischen den Gruppen mit linker und rechter politischer Gesinnung, oder die Lebenszufriedenheit ist bei linker Gesinnung niedriger.
+
+    **Alternativhypothese (H1):** Die Lebenszufriedenheit ist in der Gruppe mit rechter politischer Gesinnung geringer als in der Gruppe mit linker politischer Gesinnung.
+
+    **Testergebnis**: Der p-werit von 1 weist darauf hin, dass die Alternativhypothese abgelehnt wird und die Nullhypothese unterstützt: Die Gruppe mit linker politischer Gesinnung weist eine geringere durchschnittliche Lebenszufriedenheit auf als die Gruppe mit rechter Gesinnung.
+
+3.  **Pearson's Chi-squared Test für Geschlecht und politische Gesinnung**
+
+    **Nullhypothese (H0):** Es gibt keine Assoziation zwischen Geschlecht und politischer Gesinnung (links/rechts).
+
+    **Alternativhypothese (H1):** Es gibt eine Assoziation zwischen Geschlecht und politischer Gesinnung.
+
+    **Testergebnis:** Der p-Wert ist extrem klein, was darauf hinweist, dass die Nullhypothese abgelehnt wird. Es gibt eine signifikante Assoziation zwischen Geschlecht und politischer Gesinnung in den Daten.
+
+-   *Erläutern Sie anhand von passenden explorativen Grafiken (am besten mit dem R-Paket ggplot2), dass diese Testergebnisse für Ihre Daten sinnvoll erscheinen.*
+
+```{r, out.width='70%'}
+
+# Vertrauen in das nationale Parlament
+ggplot(df, aes(x = trstprl, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
+  geom_density(alpha = 0.5, adjust = 2) +
+  scale_fill_viridis(option = "G" ,discrete=T) +
+  labs(title = "Dichte des Vertrauens in das nationale Parlament nach politischer Gesinnung",
+       x = "Vertrauen in das nationale Parlament",
+       y = "Relative Häufigkeit/ Dichte",
+       fill = "Politische Gesinnung") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+# Lebenszufriedenheit
+ggplot(df, aes(x = stflife, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
+  geom_density(alpha = 0.5, adjust = 2) +
+  scale_fill_viridis(option = "F" ,discrete=T) +
+  labs(title = "Dichte der Lebenszufriedenheit nach politischer Gesinnung",
+       x = "Lebenszufriedenheit",
+       y = "Relative Häufigkeit/ Dichte",
+       fill = "Politische Gesinnung") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+# Geschlecht und politische Gesinnung
+ggplot(df, aes(x = factor(dummy_lr, labels = c("Links", "Rechts")), fill = factor(gndr, labels = c("Männlich", "Weiblich")))) +
+  geom_bar(position = "dodge") +
+  scale_fill_viridis(option = "A" ,discrete=T) +
+  labs(title = "Politische Gesinnung nach Geschlecht",
+       x = "Politische Gesinnung",
+       fill = "Geschlecht") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+```
+
+## **4. Regressionsmodelle - LM/GLM (10P)**
+
+*Hier benötigen Sie einen -gern selbst gewählten- Datensatz mit möglichst Variablen verschiedener Merkmalstypen darin*
+
+*Sie sollen verschiedene Regressionsmodelle schätzen und vergleichen bzw. optimale Modelle finden..*
+
+-   *Beginnen Sie zunächst mit einer ausführlicheren explorativen (grafischen) Analyse Ihrer erklärenden Variablen und deren einzelner Auswirkung auf die abhängige Variable. Hierzu sollten Sie vorrangin ggplot2 verwenden um die Grafiken zu erstellen.*
+
+```{r, out.width='70%'}
+
+# # Fastest and easiest way:
+# DataExplorer::create_report(df)
+
+# Übersicht
+# Korrelationsmatrix
+kable(as.data.frame(cor(as.matrix(select_if(df, is.numeric)))),digits = 3, format = "latex", caption = "Korrelationsmatrix") %>% kable_styling(latex_options = "scale_down")
+
+# Kovarianzmatrix
+kable(cov(select_if(df, is.numeric)),digits = 3, format = "latex", caption= "Covarianzmatrix") %>% kable_styling(latex_options = "scale_down")
+
+# Visuelle Exploration
+
+# Länder
+df %>%
+  group_by(cntry) %>%
+  summarise(mean_value = mean(as.numeric(lrscale), na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  mutate(cntry = reorder(cntry, -mean_value)) %>% 
+  ggplot(aes(x = cntry, y = mean_value, fill = cntry)) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_fill_viridis_d(option = "F") +
+  labs(title = "Mittelwert für Länder nach politischer Gesinnung",
+       x = "Land",
+       y = "Links/Rechts Mittelwert") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"),
+        legend.position = "none")
+
+# Kohorte
+df %>%
+  group_by(cohort) %>%
+  summarise(mean_value = mean(as.numeric(lrscale), na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  ggplot(aes(x = cohort, y = mean_value, fill = factor(cohort))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_fill_viridis_d(option = "B") +
+  labs(title = "Mittelwerte für Kohorten nach politischer Gesinnung",
+       x = "Land",
+       y = "Links/Rechts Mittelwert") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"),
+        legend.position = "none")
+
+
+# Internetzugang
+ggplot(df, aes(x = netusoft, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
+  geom_density(alpha = 0.5, adjust = 4) +
+  scale_fill_viridis(option = "F" ,discrete=T) +
+  labs(title = "Dichte für Internetzugang nach politischer Gesinnung",
+       x = "Internetzugang",
+       y = "Relative Häufigkeit/ Dichte",
+       fill = "Politische Gesinnung") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+#Religiösität
+ggplot(df, aes(x = rlgdgr, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
+  geom_density(alpha = 0.5, adjust = 4) +
+  scale_fill_viridis(option = "F" ,discrete=T) +
+  labs(title = "Dichte der Religiösität nach politischer Gesinnung",
+       x = "Religiösität",
+       y = "Relative Häufigkeit/ Dichte",
+       fill = "Politische Gesinnung") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+
+# Klimawandel
+ggplot(df, aes(x = wrclmch, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
+  geom_density(alpha = 0.5, adjust = 4) +
+  scale_fill_viridis(option = "F" ,discrete=T) +
+  labs(title = "Dichte der Sorgen um den Klimawandel nach politischer Gesinnung",
+       x = "Sorgen um den Klimawandel",
+       y = "Relative Häufigkeit/ Dichte",
+       fill = "Politische Gesinnung") +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))
+
+
+
+```
+
+-   *Schätzen Sie dann unterschiedliche Regressionsmodelle und vergleichen Sie sie mit verschiedenen Ansätzen (im Sinne einer in-sample und out-of-sample Modellvalidierung).*
+
+### Regressionsmodelle
+
+**OLS**
+
+Die klassische Methode der kleinsten Quadrate (OLS - Ordinary Least Squares) ist ein Verfahren zur Schätzung der unbekannten Parameter in einem linearen Regressionsmodell. OLS wählt die Parameter (Regressionskoeffizienten), die die Summe der quadrierten Residuen (Unterschiede zwischen beobachteten und durch das Modell vorhergesagten Werten) minimieren. Diese Methode wird aufgrund ihrer Einfachheit und der Tatsache, dass sie unter bestimmten Bedingungen die besten unverzerrten Schätzer liefert, häufig verwendet.
+
+Die Schätzung erfolgt durch Minimierung der Quadratsumme der Residuen:
+
+$$
+Q(\beta) = \sum_{i} (y_i - \beta_0 - \beta_1 x_{i1} - ... - \beta_m x_{im})^2
+$$
+
+In Matrixnotation kann dies als
+
+$$
+\hat{\beta} = (X^TX)^{-1}X^TY
+$$
+
+geschrieben werden,.
+
+**Logit**
+
+Im Gegensatz zu OLS, die auf ununterbrochene abhängige Variablen angewendet wird, wird die logistische Regression für binäre (0/1, Ja/Nein) Antworten verwendet. Die Wahrscheinlichkeit des Eintretens des Ereignisses wird durch die logistische Funktion modelliert, die auch als Sigmoid-Funktion bekannt ist:
+
+$$
+P(Y=1|X) = \frac{e^{X\beta}}{1 + e^{X\beta}}
+$$
+
+Zur Schätzung der Koeffizienten verwendet die logistische Regression die Maximum-Likelihood-Methode, welche die Wahrscheinlichkeit, dass die beobachteten Daten unter dem gegebenen Modell auftreten, maximiert.
+
+**Lasso**
+
+Ridge und Lasso nehmen je einen L1 oder L2 Regularisierungsterm mit in das Modell auf.
+
+Bei der Lasso-Regression wird die L1-Regularisierung angewendet, indem ein Strafterm zur Verlustfunktion hinzugefügt wird, der die absolute Summe der Regressionskoeffizienten beinhaltet. Das Ziel der Lasso-Regression ist es, sowohl den Vorhersagefehler zu minimieren als auch die Summe der absoluten Werte der Regressionskoeffizienten zu kontrollieren. Dieser Ansatz führt dazu, dass einige der Koeffizienten im Modell auf Null gesetzt werden, was gleichzeitig eine Art von Variablenselektion darstellt. Die Lasso-Regression ist besonders nützlich in Situationen, wo wir viele Prädiktoren haben, von denen einige möglicherweise irrelevant sind für die Vorhersage der Zielvariable
+
+$\text{Loss}(\theta) =\text{Original Loss}(\theta)+ \lambda_1 \sum |\theta_i|$
+
+**Ridge**
+
+Bei der Ridge-Regression wird die L2-Regularisierung verwendet, indem ein Strafterm zur Verlustfunktion hinzugefügt wird, der die quadrierten Werte der Regressionskoeffizienten summiert. Der Hauptzweck der Ridge-Regression ist es, die Größe der Koeffizienten zu kontrollieren, um Multikollinearität zu bekämpfen und Überanpassung zu reduzieren. Im Gegensatz zur Lasso-Regression, die Koeffizienten auf Null setzen kann, bewirkt die Ridge-Regression, dass die Koeffizienten kleiner werden, aber selten exakt Null.
+
+$\text{Loss}(\theta) = \text{Original Loss}(\theta) + \lambda_2 \sum \theta_i^2$
+
+**Anwendung**
+
+Die Inkorporierung von L1 oder L2 Regularisierung in ein Regressionsmodell erfolgt durch die Auswahl des Regularisierungsparameters $\lambda$ , der bestimmt, wie stark die Regularisierung sein soll. Die Verlustfunktion, die minimiert wird, um die Regressionskoeffizienten zu schätzen, umfasst sowohl den Term für den Vorhersagefehler (z.B. die Summe der quadrierten Residuen) als auch den Regularisierungsterm.
+
+Die Bestimmung von $\lambda$ (und gegebenenfalls $\alpha$ in elastischen Netzen, die eine Kombination aus L1 und L2 Regularisierung darstellen) ist daher ein wesentlicher Schritt, um das Gleichgewicht zwischen Bias und Varianz im Modell zu finden und die Generalisierbarkeit der Modellvorhersagen zu maximieren. Ein optimales $\lambda$ lässt sich durch Kreuzvalidierung bestimmen.
+
+```{r, warning=FALSE, results='asis'}
+
+#Logistische Regression
+log_m<-glm(dummy_lr ~  factor(gndr)+ netusoft + stflife + health + rlgdgr +  wrclmch + chldo12_dummy + factor(cohort) + factor(cntry),
+           family = binomial(link = "logit"), data = df)
+
+#OLS
+lin <- lm(lrscale ~  factor(gndr)+ netusoft + stflife + health + rlgdgr +  wrclmch + chldo12_dummy + factor(cohort) + factor(cntry), data=df)
+
+# Modelmatrix für Ridge und Lasso Regression: 
+x <- model.matrix(lrscale ~ factor(gndr) + netusoft + stflife + health + rlgdgr + wrclmch + chldo12_dummy + factor(cohort) + factor(cntry), data=df)[,-1]
+y <- df$lrscale
+
+set.seed(102377) # Für reproduzierbare Ergebnisse
+#Kreuzvalidierung um Lambda über verschiedene Stichproben zu bestimmen
+cv.lasso <- cv.glmnet(x, y, alpha=1) 
+lasso <- glmnet(x, y, alpha=1, lambda=cv.lasso$lambda.min)
+#Ridge Regression
+cv.ridge <- cv.glmnet(x, y, alpha=0)
+ridge <- glmnet(x, y, alpha=0, lambda=cv.ridge$lambda.min)
+
+
+# Evaluation der Koeffizienten
+stargazer(log_m, lin,
+          type = "latex",
+          single.row = T,
+          title = "Lineare und Logistische Regressionsergebnisse",
+          dep.var.labels.include = FALSE,
+          star.cutoffs = c(0.05, 0.01, 0.001),
+          star.char = c("*", "**", "***")
+          ,style = "default"
+          ,omit = "cntry"
+) 
+
+kable(data.frame(
+  Lasso= as.vector(coef(lasso)),
+  Ridge= as.vector(coef(ridge)),
+  OLS= coef(lin),
+  LOG= coef(log_m)
+),format = "latex")
+```
+
+### In Sample Evaluation:
+
+Das binäre Modell wird durch eine Konfusionsmatrix evaluiert.
+
+$$
+\begin{array}{c|cc}
+& \text{Vorhergesagt Positiv} & \text{Vorhergesagt Negativ} \\
+\hline
+\text{Wahr Positiv} & TP & FN \\
+\text{Wahr Negativ} & FP & TN \\
+\end{array}
+$$
+
+Für die Vergleiche zwischen kontinuierliche Modelle wird der Anfangsbeschriebene mittlere quadratische Fehler verwendet. Zur Erinnerung:
+
+$$\text{MSE}(\hat{\theta}) = E[(\hat{\theta} - \theta)^2$$
+
+```{r}
+
+# IN SAMPLE prediction für das Klassifikations-Modell
+pred_log <- predict(log_m, type = "response")
+pred_log <- ifelse(pred_log > 0.5, 1, 0)
+
+cm_is<- confusionMatrix(data = factor(pred_log),
+                reference = factor(df$dummy_lr),mode = "everything", positive = "1")
+cm_is[2]
+
+# IN SAMPLE prediction für die Linearen Modelle
+pred_lin <- predict(lin)
+pred_ridge <- predict(ridge, newx = x)
+pred_lasso <- predict(lasso, newx = x)
+
+
+mse_lin <- mean((pred_lin - df$lrscale)^2)
+mse_lasso <- mean((pred_lasso - df$lrscale)^2)
+mse_ridge <- mean((pred_ridge - df$lrscale)^2)
+
+
+kable(data.frame(
+  Lin = mse_lin, 
+  Lasso = mse_lasso, 
+  Ridge = mse_ridge), format = "latex", caption= "In Sample MSE-Werte")
+
+```
+
+### Out of Sample Evaluation
+
+Hier nehmen wir die 20 %, welche nicht in den Trainingsdaten enthalten sind. Sie simulieren nun bisher ungesehene Daten.
+
+`df <- initial_split(prop = 0.8, data=df) %>% training(.)`
+
+wird zu:
+
+`test<- initial_split(prop = 0.8, data=df) %>% testing(.)`
+
+```{r}
+
+set.seed(102377) # stellt sicher dass wir die gleiche Aufteilung der Daten haben
+test<- initial_split(prop = 0.8, data=df) %>% training(.)
+
+
+# OUT OF SAMPLE prediction für das Klassifikations-Modell
+pred_log <- predict(log_m, type = "response", newdata = test)
+pred_log <- ifelse(pred_log > 0.5, 1, 0)
+
+cm_oos<- confusionMatrix(data = factor(pred_log),
+                reference = factor(test$dummy_lr),mode = "everything", positive = "1")
+cm_oos[2]
+
+
+# OUT OF SAMPLE Prediction für die Linearen Modelle
+pred_lin <- predict(lin, newdata = test)
+
+
+# Setup für Ridge und Lasso
+x_test <- model.matrix(~ factor(gndr) + netusoft + stflife + health + rlgdgr + wrclmch + chldo12_dummy + factor(cohort) + factor(cntry), data=test)[,-1]
+# OUT OF SAMPLE Prediction für Ridge und Lasso
+pred_ridge <- predict(ridge, newx = x_test, s = cv.ridge$lambda.min)
+pred_lasso <- predict(lasso, newx = x_test, s = cv.lasso$lambda.min)
+
+
+mse_lin <- mean((pred_lin - test$lrscale)^2)
+mse_lasso <- mean((pred_lasso - test$lrscale)^2)
+mse_ridge <- mean((pred_ridge - test$lrscale)^2)
+
+kable(data.frame(
+  Lin = mse_lin, 
+  Lasso = mse_lasso, 
+  Ridge = mse_ridge), format = "latex", caption= "Out of Sample MSE-Werte")
+
+```
+
+-   *Diskutieren Sie Ihre Ergebnisse.*
+
+### Diskussion
+
+Die Visualisierung hat bedeutende Unterschiede entlang des Geschlechts und zwischen Ländern, auf die politische Gesinnung aufgezeigt. Erst vor kurzem hat die Financial Times eine Studie veröffentlicht, nach der die Schere bei den politischen Ansichten und Einstellungen zwischen Männern und Frauen zwischen 18 und 29 Jahren seit Jahrzehnten immer weiter auseinander geht.
+
+Für die kontinuierlichen Variablen wurden in den Dichte-Plots zwar subtilere Unterschiede beobachtet - die dennoch bedeutsam sein können. Der deutlichste Unterschied war im Vertrauen in das nationale Parlament zu sehen. Dies ist unter der Annahme, dass rechte Personen patriotischer sind, wenig überraschend. Dennoch ist besonders im deutschen Raum oft eher eine Entfremdung von der lokalen Regierung mit rechter Ideologie assoziiert. Um etwas mehr Sicherheit in solche Überlegungen zu bringen ist es wichtig für konfundierende Variablen zu kontrollieren. Regressionsmodelle sind dazu zwar auch nur bedingt in der Lage, erlauben aber in jedem Fall eine fundiertere Inferenz als absolute Häufigkeiten .
+
+Die verschiedenen Regressionsmodelle erzeugen sehr ähnliche Koeffizienten. Einige Features erweisen sich hier als nicht Signifikant, trotz visueller Unterschiede, wie zum Beispiel Internetzugang. Dennoch sind die meisten Koeffizienten signifikant! Überraschend ist der starke positive Zusammenhang zwischen Lebenszufriedenheit und rechter Gesinnung. Eine gängige Annahme ist das rechte ideologie eine Reaktion auf Unzufriedenheiten sei, wie zum Beispiel die eigene intergenerationale Mobilität.
+
+Laut der Financial Times Studie ist besonders Gen-Z von politischen Unterschieden entlang des Geschlechts betroffen. Zwischen den Kohorten im ESS sind jedoch kaum unterschiede zu beobachten.
+
+Mit 0.102 ist der Anteil der erklärten Varianz zwar gering, was in sozial wissenschaftliche Fragestellungen jedoch kein Problem darstellt, sofern die meisten Features statistisch signifikant sind ( Ozili, Person K, 2023, The acceptable R-square in empirical modelling for social science research, Munich Personal RePEc Archive).
+
+Die Lasso und Ridge Regression veringern nur den Beitrag weniger Features. Eigentlich sollte die stärke dieser beiden Modelle in der Out of Sample Evaluation zum Vorschein kommen, da der Zweck des Regularisierungsterms, wie der Name sagt, ein regularisierbares Ergebniss ist. Hier unterscheiden die Werte sich jedoch kaum von der In Sample Evaluation. Das OLS Modell wäre mit dem geringsten MSE sogar vorzuziehen. Mit einer höheren Featureanzahl wären die Vorteile der Regularisierung aber warscheinlich beobachtbar.
+
+## **Hauptkomponentenanalyse - PCA (5P)**
+
+*Hier benötigen Sie wieder einen -gern selbst gewählten- Datensatz, dieses Mal wären möglichst viele quantitativ-stetige Variablen von Vorteil. Sie sollen hier die Dimensionalität Ihrer Daten diskutieren.*
+
+-   *Sie sollten ebenfalls zunächst kurz eine explorative (grafische) Analyse Ihrer Variablen vornehmen. Legen Sie dabei besonderes Augenmerk auf Ausreißer und ggf. engere Zusammenhänge (z.B. Korrelationen) zwischen den Variablen.*
+
+-   *Führen Sie nun eine Hauptkomponentenanalyse durch, stellen Sie die Ergebnisse grafisch dar (inkl. Screeplot der Eigenwerte) und diskutieren Sie die Ergebnisse. Versuchen Sie die wichtigsten Hauptkomponenten zu interpretieren.*
+
+```{r}
+# Selbstgemachte Hauptkomponenten Analyse
+x <- df %>% select(-cntry,-cohort,-dummy_lr)
+
+s <- cov(x) *(n-1)/n ## Kovarianzmatrix - hier mit Faktor 1/n
+
+e <- eigen(s) ## Eigenwerte und -vektoren berechnen
+
+gamma <- e$vectors ## Matrix der Eigenvektoren (Spalten von gamma) = loadings
+
+lambda <- e$values ## Vector der Eigenwerte
+
+# # erzeugt wieder die Kovarianzmatrix:
+# gamma %*% diag(lambda) %*% t(gamma) 
+
+
+## Visualisierung
+
+# Erstellen eines Dataframes für ggplot
+eigen_values_df <- data.frame(Komponente = seq_along(lambda), Eigenwert = lambda)
+
+# Erstellen des Scree-Plots
+ggplot(eigen_values_df, aes(x = Komponente, y = Eigenwert)) +
+  geom_line() + geom_point() +
+  theme_minimal() +
+  theme(text = element_text(family = "serif"))+
+  labs(title = "Scree-Plot der PCA", x = "Hauptkomponente", y = "Eigenwert")
+
+
+
+# R's funktion um die PCA direkt durchzuführen
+comps <- prcomp(x = x,
+                center = T,
+                scale. = T)
+
+fviz_pca_biplot(comps, repel = F,
+                col.var = "#2E9FDF", # Variables color
+                col.ind = "#696969",  # Individuals color
+                label = "var"
+                )
+```
+
+### Screeplot
+
+Der Scree-Plot ist ein Diagramm, das die Eigenwerte abbildet, welche die Varianz darstellen, die von jeder Hauptkomponente aufgenommen wird . Es hilft bei der Entscheidung, wie viele Hauptkomponenten für weitere Analysen behalten werden sollten. Typischerweise sucht man nach einem "Ellbogen" im Plot. Aus dem Screeplot geht hervor, dass unser numerischer Datenanteil circa 4 Dimensionen hat.
+
+### Biplot
+
+Ein PCA-Biplot ist eine Darstellung, die sowohl die Position der Beobachtungen in Bezug auf die ersten zwei Hauptkomponenten als auch die Ladungen (Eigenvektoren) der Variablen auf diesen Hauptkomponenten zeigt. Anders gesagt lässt sich ablesen wie die Variablen zu den Dimensionen beitragen.
+
+## Session Info
+
+```{r, echo = FALSE}
+print(sessionInfo())
+
+
+
+```
