@@ -169,11 +169,11 @@ p2
 
 -   *Mit dem Mittelwert* $\overline{X}$ *schätzen Sie nun den Erwartungswert Ihrer gewählten Verteilung. Erläutern Sie daran die Begriffe Bias, MSE und Konsistenz.*
 
-    ### **Bias**
+    ### Bias
 
     Der Bias eines Schätzers ist die Differenz zwischen dem Erwartungswert des Schätzers und dem wahren Wert des Parameters. Ein unverzerrter Schätzer hat einen Erwartungswert, der gleich dem wahren Parameterwert ist. Ist der Mittelwert $\overline{X}$ der Exponentialverteilung ein unverzerrter Schätzer für den Erwartungswert $μ$ , so gilt $E( \overline{X})=\mu$. Dies wird für identisch und unabhängig verteilte (i.i.d.) Stichproben mit $n > 30$ angenommen, aufgrund des Zentralen Grenzwertsatzes, der besagt, dass der Mittelwert solcher Stichproben gegen eine Normalverteilung konvergiert, unabhängig von der ursprünglichen Verteilung der Variablen, solange die ursprüngliche Verteilung einen endlichen Erwartungswert und eine endliche Varianz aufweist
 
-    ### **MSE**
+    ### MSE
 
     Der Mean Squared Error (MSE) eines Schätzers ist der Erwartungswert des quadratischen Fehlers. $$\text{MSE}(\hat{\theta}) = E[(\hat{\theta} - \theta)^2$$
 
@@ -181,7 +181,7 @@ p2
 
     Für einen unverzerrten Schätzer wie $\overline{X}$ ist der MSE gleich der Varianz des Schätzers, da $Bias = 0$, aufgrund der Erwartunstreue.
 
-    ### **Konsistenz**
+    ### Konsistenz
 
     Ein Schätzer ist konsistent, wenn er mit zunehmender Stichprobengröße gegen den wahren Parameterwert konvergiert. Anders ausgedrückt ist Mittelwert $\overline{X}$ ein konsistenter Schätzer für den Erwartungswert, da mit zunehmender Stichprobengröße die Varianz von $\overline{X}$ gegen null konvergiert während der Bias bereits null ist wegen der iid-Stichprobe.
 
@@ -248,7 +248,7 @@ Wir schauen uns drei Alters-Kohorten an und lediglich Leute die auch im Befragun
 Folgende variablen werden für die Analyse ausgewählt:
 
 | label         | Inhalt                                                                                    |
-|--------------------|----------------------------------------------------|
+|---------------------|---------------------------------------------------|
 | lrscale       | Links/Rechts Skala                                                                        |
 | lrdummy       | Links Rechts Dummy                                                                        |
 | gndr          | Geschlecht                                                                                |
