@@ -10,6 +10,8 @@ format:
   latex:
     toc: true
 editor: visual
+execute:
+  echo: false
 ---
 
 # **Projektbericht Statistische Datenanalyse**
@@ -48,6 +50,8 @@ library(viridis)
 
 library(FactoMineR) # zur PCA-visualisierung
 library(factoextra)
+
+
 ```
 
 ## **1. Maximum-Likelihood-Schätzung (5P)**
@@ -119,7 +123,7 @@ $$
 
 -   *Wenden Sie die hergeleitete Schätzung auf Ihre Daten an und stellen Sie die sowohl die Likelihood- als auch die Log-Likelihood-Funktion (inklusive der eingezeichneten Schätzung) passend grafisch dar.*
 
-```{r, out.width='70%'}
+```{r}
 
 # Maximum-Likelihood-Schätzung für p
 p_hat <- 1 / mean(sample)
@@ -187,7 +191,7 @@ p2
 
 -   *Überlegen Sie sich wie Sie mit Hilfe von Stichprobenziehungen in R (grafisch) illustrieren können, dass* $\overline{X}$ *gegen den "wahren" Erwartungswert konvergiert.*
 
-```{r, out.width='70%'}
+```{r}
 # Parameter setzen
 lambda <- 1 
 mu <- 1 / lambda # wahrer Wert
@@ -217,7 +221,7 @@ ggplot(data_means, aes(x = SampleSize, y = Mean)) +
 
 -   *Überlegen Sie sich außerdem, wie Sie mit Hilfe von Stichprobenziehungen in R (grafisch) illustrieren können, dass* $\overline{X}$ *eine approximative Normalverteilung hat. Welche approximative Normalverteilung sollte das bei Ihnen sein - in Abhängigkeit vom Parameter der Verteilung?*
 
-```{r, out.width='70%'}
+```{r}
 set.seed(102377)
 num_simulations <- 1000
 simulated_means <- replicate(num_simulations, mean(rexp(1000, rate = lambda)))
@@ -248,7 +252,7 @@ Wir schauen uns drei Alters-Kohorten an und lediglich Leute die auch im Befragun
 Folgende variablen werden für die Analyse ausgewählt:
 
 | label         | Beschreibung                                                                              |
-|----------------------|--------------------------------------------------|
+|-----------------------|------------------------------------------------|
 | lrscale       | Links/Rechts Skala                                                                        |
 | lrdummy       | Links Rechts Dummy                                                                        |
 | gndr          | Geschlecht                                                                                |
@@ -342,7 +346,7 @@ list(t_test_trstprl = t_test_trstprl,
 
 -   *Erläutern Sie anhand von passenden explorativen Grafiken (am besten mit dem R-Paket ggplot2), dass diese Testergebnisse für Ihre Daten sinnvoll erscheinen.*
 
-```{r, out.width='70%'}
+```{r}
 
 # Vertrauen in das nationale Parlament
 ggplot(df, aes(x = trstprl, fill = factor(dummy_lr, labels = c("Links", "Rechts")))) +
@@ -386,7 +390,7 @@ ggplot(df, aes(x = factor(dummy_lr, labels = c("Links", "Rechts")), fill = facto
 
 -   *Beginnen Sie zunächst mit einer ausführlicheren explorativen (grafischen) Analyse Ihrer erklärenden Variablen und deren einzelner Auswirkung auf die abhängige Variable. Hierzu sollten Sie vorrangin ggplot2 verwenden um die Grafiken zu erstellen.*
 
-```{r, out.width='70%'}
+```{r}
 
 # # Fastest and easiest way:
 # DataExplorer::create_report(df)
