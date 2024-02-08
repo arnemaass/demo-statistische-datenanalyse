@@ -252,7 +252,7 @@ Wir schauen uns drei Alters-Kohorten an und lediglich Leute die auch im Befragun
 Folgende variablen werden für die Analyse ausgewählt:
 
 | label         | Beschreibung                                                                              |
-|-----------------------|------------------------------------------------|
+|---------------|---------------------------------------------------------|
 | lrscale       | Links/Rechts Skala                                                                        |
 | lrdummy       | Links Rechts Dummy                                                                        |
 | gndr          | Geschlecht                                                                                |
@@ -526,6 +526,8 @@ Die Inkorporierung von L1 oder L2 Regularisierung in ein Regressionsmodell erfol
 
 Die Bestimmung von $\lambda$ (und gegebenenfalls $\alpha$ in elastischen Netzen, die eine Kombination aus L1 und L2 Regularisierung darstellen) ist daher ein wesentlicher Schritt, um das Gleichgewicht zwischen Bias und Varianz im Modell zu finden und die Generalisierbarkeit der Modellvorhersagen zu maximieren. Ein optimales $\lambda$ lässt sich durch Kreuzvalidierung bestimmen.
 
+**Ergebnisse**
+
 ```{r, warning=FALSE, results='asis'}
 
 #Logistische Regression
@@ -553,7 +555,7 @@ stargazer(log_m, lin,
           type = "latex",
           single.row = T,
           title = "Lineare und Logistische Regressionsergebnisse",
-          dep.var.labels.include = FALSE,
+          dep.var.labels.include = T,
           star.cutoffs = c(0.05, 0.01, 0.001),
           star.char = c("*", "**", "***")
           ,style = "default"
@@ -674,7 +676,7 @@ Laut der Financial Times Studie ist besonders Gen-Z von politischen Unterschiede
 
 Mit 0.102 ist der Anteil der erklärten Varianz zwar gering, was in sozial wissenschaftliche Fragestellungen jedoch kein Problem darstellt, sofern die meisten Features statistisch signifikant sind (Ozili, Person K, 2023, The acceptable R-square in empirical modelling for social science research, Munich Personal RePEc Archive).
 
-Die Lasso und Ridge Regression veringern nur den Beitrag weniger Features. Eigentlich sollte die stärke dieser beiden Modelle in der Out of Sample Evaluation zum Vorschein kommen, da der Zweck des Regularisierungsterms, wie der Name sagt, ein regularisierbares Ergebniss ist. Hier unterscheiden die Werte sich jedoch kaum von der In Sample Evaluation. Das OLS Modell wäre mit dem geringsten MSE sogar vorzuziehen. Mit einer höheren Featureanzahl wären die Vorteile der Regularisierung aber warscheinlich beobachtbar.
+Die Lasso und Ridge Regression veringern nur den Beitrag weniger Features. Eigentlich sollte die stärke dieser beiden Modelle in der Out of Sample Evaluation zum Vorschein kommen, da der Zweck des Regularisierungsterms, ein veralgemeinerbares Ergebnis ist. Hier unterscheiden die Werte sich jedoch kaum von der In Sample Evaluation. Das OLS Modell wäre mit dem geringsten MSE sogar vorzuziehen. Mit einer höheren Featureanzahl wären die Vorteile der Regularisierung aber warscheinlich beobachtbar.
 
 ## **Hauptkomponentenanalyse - PCA (5P)**
 
